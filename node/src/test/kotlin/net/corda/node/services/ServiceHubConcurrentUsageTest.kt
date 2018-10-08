@@ -24,8 +24,11 @@ import rx.schedulers.Schedulers
 import java.util.concurrent.CountDownLatch
 
 class ServiceHubConcurrentUsageTest {
-
-    private val mockNet = InternalMockNetwork(cordappsForAllNodes = cordappsForPackages("net.corda.finance.schemas", "net.corda.node.services.vault.VaultQueryExceptionsTests", Cash::class.packageName))
+    private val mockNet = InternalMockNetwork(cordappsForAllNodes = cordappsForPackages(
+            "net.corda.finance.schemas",
+            "net.corda.node.services.vault.VaultQueryExceptionsTests",
+            Cash::class.packageName
+    ))
 
     @After
     fun stopNodes() {
@@ -34,7 +37,6 @@ class ServiceHubConcurrentUsageTest {
 
     @Test
     fun `operations requiring a transaction work from another thread`() {
-
         val latch = CountDownLatch(1)
         var successful = false
         val initiatingFlow = TestFlow(mockNet.defaultNotaryIdentity)
@@ -57,15 +59,13 @@ class ServiceHubConcurrentUsageTest {
     }
 
     class TestFlow(private val notary: Party) : FlowLogic<SignedTransaction>() {
-
         @Suspendable
         override fun call(): SignedTransaction {
-
             val builder = TransactionBuilder(notary)
             val issuer = ourIdentity.ref(OpaqueBytes.of(0))
             Cash().generateIssue(builder, 10.DOLLARS.issuedBy(issuer), ourIdentity, notary)
             val stx = serviceHub.signInitialTransaction(builder)
-            return subFlow(FinalityFlow(stx))
+            return subFlow(FinalityFlow(stx, emptyList()))
         }
     }
 }

@@ -8,9 +8,7 @@ import net.corda.core.contracts.Contract
 import net.corda.core.contracts.ContractState
 import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.crypto.SecureHash
-import net.corda.core.flows.FinalityFlow
-import net.corda.core.flows.FlowLogic
-import net.corda.core.flows.StartableByRPC
+import net.corda.core.flows.*
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
 import net.corda.core.internal.Emoji
@@ -105,6 +103,7 @@ private fun sender(rpc: CordaRPCOps, inputStream: InputStream, hash: SecureHash.
 }
 // DOCEND 2
 
+@InitiatingFlow
 @StartableByRPC
 class AttachmentDemoFlow(private val otherSide: Party,
                          private val notary: Party,
@@ -124,10 +123,19 @@ class AttachmentDemoFlow(private val otherSide: Party,
 
         progressTracker.currentStep = SIGNING
 
-        // Send the transaction to the other recipient
         val stx = serviceHub.signInitialTransaction(ptx)
 
-        return subFlow(FinalityFlow(stx, setOf(otherSide)))
+        // Send the transaction to the other recipient
+        return subFlow(FinalityFlow(stx, initiateFlow(otherSide)))
+    }
+}
+
+@InitiatedBy(AttachmentDemoFlow::class)
+class StoreAttachmentFlow(private val otherSide: FlowSession) : FlowLogic<Unit>() {
+    @Suspendable
+    override fun call() {
+        // As a non-participant to the transaction we need to record all states
+        subFlow(ReceiveFinalityFlow(otherSide, recordAllStates = true))
     }
 }
 

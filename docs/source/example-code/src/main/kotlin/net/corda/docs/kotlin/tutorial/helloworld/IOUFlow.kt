@@ -18,7 +18,7 @@ import net.corda.core.utilities.ProgressTracker
 
 import com.template.TemplateContract.TEMPLATE_CONTRACT_ID
 
-// Replace TemplateFlow's definition with:
+// Replace Initiator's definition with:
 @InitiatingFlow
 @StartableByRPC
 class IOUFlow(val iouValue: Int,
@@ -45,8 +45,11 @@ class IOUFlow(val iouValue: Int,
         // We sign the transaction.
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
-        // We finalise the transaction.
-        subFlow(FinalityFlow(signedTx))
+        // Creating a session with the other party.
+        val otherPartySession = initiateFlow(otherParty)
+
+        // We finalise the transaction and then send it to the counterparty.
+        subFlow(FinalityFlow(signedTx, otherPartySession))
     }
 }
 // DOCEND 01

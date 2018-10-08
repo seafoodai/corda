@@ -14,7 +14,6 @@ import net.corda.core.flows.StartableByRPC
 import net.corda.core.identity.Party
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
-
 // DOCEND 01
 
 @InitiatingFlow
@@ -56,7 +55,7 @@ class IOUFlow(val iouValue: Int,
         val fullySignedTx = subFlow(CollectSignaturesFlow(signedTx, listOf(otherPartySession), CollectSignaturesFlow.tracker()))
 
         // Finalising the transaction.
-        subFlow(FinalityFlow(fullySignedTx))
+        subFlow(FinalityFlow(fullySignedTx, otherPartySession))
         // DOCEND 02
     }
 }

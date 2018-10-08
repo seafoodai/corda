@@ -215,6 +215,8 @@ class StaffedFlowHospital {
     /**
      * Parks [FinalityHandler]s for observation.
      */
+    // TODO The FinalityHandler may have errored because we no longer support the old FinalityFlow API. We want to be able
+    // to allow the node operator to recover and record the transaction.
     object FinalityDoctor : Staff {
         override fun consult(flowFiber: FlowFiber, currentState: StateMachineState, newError: Throwable, history: MedicalHistory): Diagnosis {
             return (currentState.flowLogic as? FinalityHandler)?.let { logic -> Diagnosis.OVERNIGHT_OBSERVATION.also { warn(logic, flowFiber, currentState) } } ?: Diagnosis.NOT_MY_SPECIALTY

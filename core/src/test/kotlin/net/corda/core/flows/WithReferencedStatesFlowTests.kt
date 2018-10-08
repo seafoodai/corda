@@ -50,21 +50,21 @@ internal class CreateRefState : FlowLogic<SignedTransaction>() {
             addOutputState(RefState.State(ourIdentity), RefState.CONTRACT_ID)
             addCommand(RefState.Create(), listOf(ourIdentity.owningKey))
         })
-        return subFlow(FinalityFlow(stx))
+        return subFlow(FinalityFlow(stx, emptyList()))
     }
 }
 
 // A flow to update a specific reference state.
-internal class UpdateRefState(private val stateAndRef: StateAndRef<ContractState>) : FlowLogic<SignedTransaction>() {
+internal class UpdateRefState(private val stateAndRef: StateAndRef<RefState.State>) : FlowLogic<SignedTransaction>() {
     @Suspendable
     override fun call(): SignedTransaction {
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
         val stx = serviceHub.signInitialTransaction(TransactionBuilder(notary = notary).apply {
             addInputState(stateAndRef)
-            addOutputState((stateAndRef.state.data as RefState.State).update(), RefState.CONTRACT_ID)
+            addOutputState(stateAndRef.state.data.update(), RefState.CONTRACT_ID)
             addCommand(RefState.Update(), listOf(ourIdentity.owningKey))
         })
-        return subFlow(FinalityFlow(stx))
+        return subFlow(FinalityFlow(stx, emptyList()))
     }
 }
 
@@ -111,7 +111,7 @@ internal class UseRefState(private val linearId: UniqueIdentifier) : FlowLogic<S
             addOutputState(DummyState(), DummyContract.PROGRAM_ID)
             addCommand(DummyContract.Commands.Create(), listOf(ourIdentity.owningKey))
         })
-        return subFlow(FinalityFlow(stx))
+        return subFlow(FinalityFlow(stx, emptyList()))
     }
 }
 
@@ -160,5 +160,4 @@ class WithReferencedStatesFlowTests {
         val result = useRefTx.getOrThrow()
         assertEquals(updatedRefState.ref, result.tx.references.single())
     }
-
 }

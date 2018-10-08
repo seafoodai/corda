@@ -31,7 +31,7 @@ class KotlinIntegrationTestingTutorial {
         // START 1
         driver(DriverParameters(
                 startNodesInProcess = true,
-                extraCordappPackagesToScan = listOf("net.corda.finance.contracts.asset", "net.corda.finance.schemas")
+                extraCordappPackagesToScan = listOf("net.corda.finance")
         )) {
             val aliceUser = User("aliceUser", "testPassword1", permissions = setOf(
                     startFlow<CashIssueAndPaymentFlow>(),

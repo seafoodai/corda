@@ -3,6 +3,7 @@ package net.corda.node.services
 import net.corda.core.crypto.SecureHash
 import net.corda.core.flows.FinalityFlow
 import net.corda.core.flows.StateMachineRunId
+import net.corda.core.internal.cordapp.CordappInfoResolver
 import net.corda.core.toFuture
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
@@ -25,7 +26,7 @@ import org.junit.After
 import org.junit.Test
 
 class FinalityHandlerTest {
-    private lateinit var mockNet: InternalMockNetwork
+    private val mockNet = InternalMockNetwork()
 
     @After
     fun cleanUp() {
@@ -36,8 +37,6 @@ class FinalityHandlerTest {
     fun `sent to flow hospital on error and attempted retry on node restart`() {
         // Setup a network where only Alice has the finance CorDapp and it sends a cash tx to Bob who doesn't have the
         // CorDapp. Bob's FinalityHandler will error when validating the tx.
-        mockNet = InternalMockNetwork()
-
         val assertCordapp = TestCorDapp.Factory.create("net.corda.finance.contracts.asset", "1.0").plusPackage("net.corda.finance.contracts.asset")
         val alice = mockNet.createNode(InternalMockNodeParameters(legalName = ALICE_NAME, additionalCordapps = setOf(assertCordapp)))
 
@@ -59,10 +58,13 @@ class FinalityHandlerTest {
                 .map { it.logic.runId }
                 .toFuture()
 
-        val finalisedTx = alice.services.startFlow(FinalityFlow(stx)).run {
-            mockNet.runNetwork()
-            resultFuture.getOrThrow()
+        val resultFuture = CordappInfoResolver.withCordappInfo(targetPlatformVersion = 3) {
+            @Suppress("DEPRECATION")
+            alice.services.startFlow(FinalityFlow(stx)).resultFuture.apply {
+                mockNet.runNetwork()
+            }
         }
+        val finalisedTx = resultFuture.getOrThrow()
         val finalityHandlerId = finalityHandlerIdFuture.getOrThrow()
 
         bob.assertFlowSentForObservation(finalityHandlerId)
@@ -87,8 +89,6 @@ class FinalityHandlerTest {
     }
 
     private fun TestStartedNode.getTransaction(id: SecureHash): SignedTransaction? {
-        return database.transaction {
-            services.validatedTransactions.getTransaction(id)
-        }
+        return services.validatedTransactions.getTransaction(id)
     }
 }

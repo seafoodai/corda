@@ -38,7 +38,10 @@ import net.corda.testing.node.internal.*
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType
-import org.junit.*
+import org.junit.After
+import org.junit.Before
+import org.junit.Ignore
+import org.junit.Test
 import rx.Notification
 import rx.Observable
 import java.time.Instant
@@ -902,7 +905,7 @@ private object WaitingFlows {
         override fun call(): SignedTransaction {
             val otherPartySession = initiateFlow(otherParty)
             otherPartySession.send(stx)
-            return waitForLedgerCommit(stx.id)
+            return subFlow(ReceiveFinalityFlow(otherPartySession, expectedTxId = stx.id))
         }
     }
 
@@ -911,7 +914,7 @@ private object WaitingFlows {
         override fun call(): SignedTransaction {
             val stx = otherPartySession.receive<SignedTransaction>().unwrap { it }
             if (throwException != null) throw throwException.invoke()
-            return subFlow(FinalityFlow(stx, setOf(otherPartySession.counterparty)))
+            return subFlow(FinalityFlow(stx, otherPartySession))
         }
     }
 }

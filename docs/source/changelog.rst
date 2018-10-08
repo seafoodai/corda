@@ -7,15 +7,24 @@ release, see :doc:`upgrade-notes`.
 Unreleased
 ----------
 
-* Introduced new optional network bootstrapper command line option (--minimum-platform-version) to set as a network parameter
+* CorDapps now have the ability to specify a minimum platform version in their MANIFEST.MF to prevent old nodes from loading them.
 
-* Introduce minimum and target platform version for CorDapps.
+* CorDapps have the ability to specify a target platform version in their MANIFEST.MT as a means of indicating to the node
+  the app was designed and tested on that version.
+
+* ``FinalityFlow`` is now an inlined flow and no longer requires a handler flow in the counterparty. This is to fix the
+  security problem with the handler flow as it accepts any transaction it receives without any checks. Existing CorDapp
+  binaries relying on this old behaviour will continue to function as previously. However, it is strongly recommended that
+  CorDapps switch to this new API. See :doc:`upgrade-notes` for further details.
+
+* Introduced new optional network bootstrapper command line option (--minimum-platform-version) to set as a network parameter
 
 * Vault storage of contract state constraints metadata and associated vault query functions to retrieve and sort by constraint type.
 
 * New overload for ``CordaRPCClient.start()`` method allowing to specify target legal identity to use for RPC call.
 
-* Case insensitive vault queries can be specified via a boolean on applicable SQL criteria builder operators. By default queries will be case sensitive.
+* Case insensitive vault queries can be specified via a boolean on applicable SQL criteria builder operators. By default
+  queries will be case sensitive.
 
 * Getter added to ``CordaRPCOps`` for the node's network parameters.
 
@@ -46,7 +55,8 @@ Unreleased
   rather than IllegalStateException.
 
 * The Corda JPA entities no longer implement java.io.Serializable, as this was causing persistence errors in obscure cases.
-  Java serialization is disabled globally in the node, but in the unlikely event you were relying on these types being Java serializable please contact us.
+  Java serialization is disabled globally in the node, but in the unlikely event you were relying on these types being Java
+  serializable please contact us.
 
 * Remove all references to the out-of-process transaction verification.
 
@@ -104,7 +114,8 @@ Unreleased
 * The node's configuration is only printed on startup if ``devMode`` is ``true``, avoiding the risk of printing passwords
   in a production setup.
 
-* ``NodeStartup`` will now only print node's configuration if ``devMode`` is ``true``, avoiding the risk of printing passwords in a production setup.
+* ``NodeStartup`` will now only print node's configuration if ``devMode`` is ``true``, avoiding the risk of printing passwords
+  in a production setup.
 
 * SLF4J's MDC will now only be printed to the console if not empty. No more log lines ending with "{}".
 

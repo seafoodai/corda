@@ -11,13 +11,23 @@ import net.corda.core.transactions.ContractUpgradeWireTransaction
 import net.corda.core.node.StatesToRecord
 import net.corda.core.transactions.SignedTransaction
 
-// TODO: We should have a whitelist of contracts we're willing to accept at all, and reject if the transaction
-//       includes us in any outside that list. Potentially just if it includes any outside that list at all.
-// TODO: Do we want to be able to reject specific transactions on more complex rules, for example reject incoming
-//       cash without from unknown parties?
-class FinalityHandler(private val sender: FlowSession) : FlowLogic<Unit>() {
+/**
+ * The FinalityHandler is insecure as it blindly accepts any and all transactions into the node's local vault without
+ * doing any checks. To plug this hole, the sending-side FinalityFlow is gated to only work with old CorDapps (those whose
+ * target platform version < 4), and this flow will only work if there are old CorDapps loaded (to preserve backwards
+ * compatibility).
+ *
+ * If we receive a transaction, and the FinalityHanlder is disabled, then it will throw a FlowException. This is so that
+ * 1) the node operator can recover and record the transaction if need be from the flow hospital
+ * 2) the sending flow is notified of the issue
+ */
+// TODO Should we worry about (accidental?) spamming of the flow hospital from other members using the old API
+class FinalityHandler(private val sender: FlowSession, private val disable: Boolean) : FlowLogic<Unit>() {
     @Suspendable
     override fun call() {
+        if (disable) {
+            throw FlowException("This node does not support the old unsafe usage of FinalityFlow.")
+        }
         subFlow(ReceiveTransactionFlow(sender, true, StatesToRecord.ONLY_RELEVANT))
     }
 
