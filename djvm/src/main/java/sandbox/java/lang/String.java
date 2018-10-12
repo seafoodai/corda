@@ -44,6 +44,11 @@ public final class String extends Object implements Comparable<String>, CharSequ
         this.value = new java.lang.String(codePoints, offset, count);
     }
 
+    String(char[] value, boolean share) {
+        // We can't share this array, unfortunately.
+        this.value = new java.lang.String(value);
+    }
+
     @Deprecated
     public String(byte ascii[], int hibyte, int offset, int count) {
         this.value = new java.lang.String(ascii, hibyte, offset, count);
