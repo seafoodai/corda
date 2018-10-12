@@ -13,9 +13,9 @@ import java.security.cert.X509Certificate
 /**
  * Wrapper around a [KeyStore] object but only dealing with [X509Certificate]s and with a better API.
  */
-class X509KeyStore private constructor(val internal: KeyStore, private val storePassword: String, private val keyStoreFile: Path? = null) {
+class X509KeyStore private constructor(val internal: KeyStore, private val storePassword: String, private val keyStoreFile: Path? = null, private val saveSupported: Boolean = true) {
     /** Wrap an existing [KeyStore]. [save] is not supported. */
-    constructor(keyStore: KeyStore, storePassword: String) : this(keyStore, storePassword, null)
+    constructor(keyStore: KeyStore, storePassword: String) : this(keyStore, storePassword, null, false)
 
     /** Create an empty [KeyStore] using the given password. [save] is not supported. */
     constructor(storePassword: String) : this(
@@ -79,7 +79,9 @@ class X509KeyStore private constructor(val internal: KeyStore, private val store
     }
 
     fun save() {
-        internal.save(checkWritableToFile(), storePassword)
+        if (saveSupported) {
+            internal.save(checkWritableToFile(), storePassword)
+        }
     }
 
     fun update(action: X509KeyStore.() -> Unit) {
